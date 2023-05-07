@@ -33,6 +33,7 @@ cc_library(
     name = "eigen3",
     hdrs = EIGEN3_THIRD_PARTY_HEADERS,
     visibility = ["//visibility:public"],
+    linkopts = ["-fopenmp"]
     deps = [
         "@eigen_archive//:eigen3",
     ],

@@ -264,9 +264,9 @@ void SketchyCGAL::run(){
     Eigen::ArrayXd y0 = Eigen::ArrayXd::Zero(n);
     Eigen::ArrayXd y = y0;
     Eigen::ArrayXd vt;
-    double pobj = 0;
+    double pobj = 0.0;
 
-    double TRACE = 0;
+    double TRACE = 0.0;
     double beta, eta, FeasOrg, FeasCond, ObjCond;
 
     bool stop_tolerance = false;
@@ -295,7 +295,7 @@ void SketchyCGAL::run(){
             double ObjCond1 = pobj - this->primitive1(smallest_ev).matrix().dot( (smallest_ev).matrix() );
             double ObjCond2 = y.matrix().dot( (b - Ahk).matrix() ) + beta * ( z - b ).matrix().dot( (z - Ahk).matrix() );
             double ObjCond3 = -0.5*beta* pow((z-b).matrix().norm(), 2);
-            double ObjCond4 = std::max(abs(pobj*_RESCALE_OBJ), 1.0);
+            double ObjCond4 = std::max( double(abs(pobj*_RESCALE_OBJ)), 1.0);
             ObjCond = (ObjCond1 + ObjCond2 + ObjCond3)*_RESCALE_OBJ / ObjCond4;
             // std::cout << "FeasOrg = " << FeasOrg << " FeasCond = " << FeasCond << " ObjCond = " << ObjCond << std::endl;
 

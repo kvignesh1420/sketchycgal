@@ -33,4 +33,5 @@ build:windows --copt="/Zc:preprocessor"
 build:optimization --copt=-msse4.2
 build:optimization --copt=-mavx
 build:optimization --compilation_mode=opt
-<!-- build:optimization --copt=-fopenmp -->
+build:optimization --copt=-fopenmp
+build:optimization --copt=-DEIGEN_USE_OPENMP
