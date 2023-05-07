@@ -30,3 +30,23 @@
 *.exe
 *.out
 *.app
+
+
+######################### sketchycgal ########################
+
+# vscode
+.vscode/*
+
+# bin
+cc/solver
+
+# helpers
+concepts/
+data/
+results/
+
+#bazel
+bazel-*
+.clwb/
+.idea/
+plots/
