@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 #include "third_party/eigen3/Eigen/SparseCore"
 #include "third_party/eigen3/Eigen/SparseCholesky"
 #include "sketchycgal/cc/reader.h"
