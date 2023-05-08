@@ -18,6 +18,7 @@ int main(int argc, char *argv[]){
     #else
     std::cout << "Default Eigen parallelization enabled, OpenMP unavailable " << std::endl;
     #endif
+    std::cout << "Eigen using " << Eigen::nbThreads( ) << " threads" << std::endl;
     SketchyCGAL Runner = SketchyCGAL();
     Runner.setup(filepath, 10, 10, 0.1);
     std::cout << "Starting the SketchyCGAL loop " << std::endl;

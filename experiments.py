@@ -20,9 +20,9 @@ class Runner:
 
     def initialize_stats(self):
 
-        for dir_name in os.listdir(DATAPATH):
-            if os.path.isdir(os.path.join(DATAPATH, dir_name)):
-                filepath = os.path.join(DATAPATH, dir_name, dir_name, "{}.mtx".format(dir_name))
+        for dir_name in os.listdir(self.datapath):
+            if os.path.isdir(os.path.join(self.datapath, dir_name)):
+                filepath = os.path.join(self.datapath, dir_name, dir_name, "{}.mtx".format(dir_name))
                 self.stats[dir_name] = {"dataset": dir_name}
                 self.stats[dir_name]["filepath"] = filepath
                 self.stats[dir_name]["max_iters"] = self.max_iters
@@ -42,7 +42,7 @@ class Runner:
         for k, v in self.stats.items():
             records.append(v)
         df = pd.DataFrame(records).sort_values("dataset")
-        print(df)
+        return df
 
     def run(self):
         for dname in list(self.stats.keys()):
@@ -51,7 +51,8 @@ class Runner:
             duration = self._helper(filepath=filepath)
             self.stats[dname]["duration"] = duration
             self.stats[dname]["throughput"] = self.stats[dname]["max_iters"]/duration
-        self.prepare_df()
+        df = self.prepare_df()
+        print(df)
 
 
 if __name__ == "__main__":
