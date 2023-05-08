@@ -19,7 +19,7 @@ class NystromSketch{
     };
 
     // rank-one updates to the sketched solution
-    void update( Eigen::ArrayXd& v, double eta);
+    void update( Eigen::VectorXd& v, double eta);
 
     // reconstruct solution from sketches
     std::pair<Eigen::MatrixXd, Eigen::MatrixXd> reconstruct();

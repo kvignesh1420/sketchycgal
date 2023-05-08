@@ -23,9 +23,9 @@ SketchyCGAL::SketchyCGAL(){}
 
 /*================================== Private methods ======================================*/
 
-Eigen::SparseMatrix<double>* SketchyCGAL::computeLaplacian(Eigen::SparseMatrix<double>* A){
+Eigen::SparseMatrix<double, Eigen::RowMajor>* SketchyCGAL::computeLaplacian(Eigen::SparseMatrix<double>* A){
     Eigen::SparseMatrix<double>* D = new Eigen::SparseMatrix<double>(A->rows(), A->cols());
-    Eigen::SparseMatrix<double>* L = new Eigen::SparseMatrix<double>(A->rows(), A->cols());
+    Eigen::SparseMatrix<double, Eigen::RowMajor>* L = new Eigen::SparseMatrix<double, Eigen::RowMajor>(A->rows(), A->cols());
     Eigen::VectorXd v = Eigen::VectorXd::Ones(A->cols());
     Eigen::VectorXd res = *A * v;
     D->reserve(Eigen::VectorXi::Constant(A->cols(), 1));
@@ -47,47 +47,47 @@ Eigen::SparseMatrix<double>* SketchyCGAL::computeLaplacian(Eigen::SparseMatrix<d
     return L;
 }
 
-Eigen::ArrayXd SketchyCGAL::primitive1(Eigen::ArrayXd& x){
+Eigen::VectorXd SketchyCGAL::primitive1(const Eigen::VectorXd& x){
     // std::cout<<"primitive1" <<std::endl;
-    return _SCALE_C * ((*_C)*(x.matrix()));
+    return _SCALE_A * (*_C)*(x);
 }
 
-Eigen::ArrayXd SketchyCGAL::primitive2(Eigen::ArrayXd& y, Eigen::ArrayXd& x){
+Eigen::VectorXd SketchyCGAL::primitive2(const Eigen::VectorXd& y,const Eigen::VectorXd& x){
     // std::cout<<"primitive2" <<std::endl;
-    return _SCALE_A * (y.cwiseProduct(x));
+    return _SCALE_A * (y.array().cwiseProduct(x.array()));
 }
 
-Eigen::ArrayXd SketchyCGAL::primitive3(Eigen::ArrayXd& x){
+Eigen::VectorXd SketchyCGAL::primitive3(const Eigen::VectorXd& x){
     // std::cout<<"primitive3" <<std::endl;
-    return _SCALE_A * x.cwiseProduct(x);
+    return _SCALE_A * x.array().cwiseProduct(x.array());
 }
 
-std::pair<Eigen::ArrayXd, double> SketchyCGAL::ApproxMinEvecLanczosSE(Eigen::ArrayXd& vt, int n, int q){
+std::pair<Eigen::VectorXd, double> SketchyCGAL::ApproxMinEvecLanczosSE(Eigen::VectorXd& vt, int n, int q){
 
     // choose the minimum of iterations vs dimension
     // std::cout << "q " << q << std::endl;
     q = std::min(q, n-1);
     // std::cout << "q " << q << std::endl;
-    std::vector<double> aleph(q, 0.0);
-    std::vector<double> beth(q, 0.0);
+    double* aleph = new double[q]();
+    double* beth = new double[q]();
 
     // std::cout << "initialized aleph and beth in ApproxMinEvecLanczosSE" << std::endl;
 
     std::default_random_engine _generator;
     std::normal_distribution<double> _distribution(0.0, 1.0);
-    Eigen::ArrayXd v(n);
-    // for (int i = 0; i < n; ++i) {
-    //     v(i) = _distribution(_generator);
-    // }
-    v.setRandom();
+    Eigen::VectorXd v(n);
+    for (int i = 0; i < n; ++i) {
+        v(i) = _distribution(_generator);
+    }
+    // v.setRandom();
     // std::cout <<" v vector " << v << std::endl;
     // std::cout << " v size = "<< v.size() << " v norm = " << v.matrix().norm() << std::endl;
-    v /= v.matrix().norm();
-    Eigen::ArrayXd vi = v;
-    Eigen::ArrayXd vip, vim;
+    v /= v.norm();
+    Eigen::VectorXd vi = v;
+    Eigen::VectorXd vip, vim;
 
     // define a lambda function M
-    auto M = [this](Eigen::ArrayXd& a, Eigen::ArrayXd b) -> Eigen::ArrayXd {
+    auto M = [this](Eigen::VectorXd& a, Eigen::VectorXd& b) -> Eigen::VectorXd {
         return this->primitive1(a) + this->primitive2(b, a);
     };
 
@@ -97,15 +97,16 @@ std::pair<Eigen::ArrayXd, double> SketchyCGAL::ApproxMinEvecLanczosSE(Eigen::Arr
     for(i = 0; i < q; i++){
         vip = M( vi, vt );
         // std::cout << " vip size = "<< vip.size() << " vip norm = " << vip.matrix().norm() << std::endl;
-        aleph[i] = vi.matrix().dot(vip.matrix());
-        if(i==0){
-            vip = vip - aleph[i]*vi;
-        }else{
-            vip =  vip - aleph[i]*vi - beth[i-1] * vim;
-        }
-        beth[i] = vip.matrix().norm();
+        aleph[i] = vi.dot(vip);
 
-        if ( abs(beth[i]) < sqrt(n)*EPS ) break;
+        if(i==0){
+            vip.noalias() -= aleph[i]*vi;
+        }else{
+            vip.noalias() -= (aleph[i]*vi + beth[i-1] * vim);
+        }
+        beth[i] = vip.norm();
+
+        // if ( abs(beth[i]) < sqrt(n)*EPS ) break;
 
         vip /= beth[i];
         vim = vi;
@@ -142,33 +143,35 @@ std::pair<Eigen::ArrayXd, double> SketchyCGAL::ApproxMinEvecLanczosSE(Eigen::Arr
     /* start second loop */
 
     // reset values
-    std::fill(aleph.begin(), aleph.end(), 0.0);
-    std::fill(beth.begin(), beth.end(), 0.0);
+    for (int idx = 0; idx < q; idx++) {
+        aleph[idx] = 0.0;
+        beth[idx] = 0.0;
+    }
 
     vi = v;
-    v = Eigen::ArrayXd::Zero(n);
+    v = Eigen::VectorXd::Zero(n);
 
     for(i = 1; i < Uind.size(); i++){
-        v = v + vi * Uind(i);
+        v.noalias() += vi * Uind(i);
         vip = M( vi, vt);
-        aleph[i] = vi.matrix().dot(vip.matrix());
+        aleph[i] = vi.dot(vip);
         if(i==0){
-            vip = vip - aleph[i]*vi;
+            vip.noalias() -= aleph[i]*vi;
         }else{
-            vip = vip - aleph[i]*vi - beth[i-1] * vim;
+            vip.noalias() -= (aleph[i]*vi + beth[i-1] * vim);
         }
-        beth[i] = vip.matrix().norm();
+        beth[i] = vip.norm();
 
         vip /= beth[i];
         vim = vi;
         vi = vip;
     }
 
-    double norm_v = v.matrix().norm();
+    double norm_v = v.norm();
     min_D_value *= norm_v;
     v /= norm_v;
 
-    return std::pair<Eigen::ArrayXd, double>(v, min_D_value);
+    return std::pair<Eigen::VectorXd, double>(v, min_D_value);
 
 }
 
@@ -177,7 +180,9 @@ std::pair<Eigen::MatrixXd, Eigen::VectorXd> SketchyCGAL::cgal_eig(const Eigen::S
     try {
         Eigen::MatrixXd U;
         Eigen::VectorXd D;
-        Eigen::EigenSolver<Eigen::MatrixXd> es(X.toDense());
+        Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> es;
+        es.compute(X.toDense());
+        // Eigen::EigenSolver<Eigen::MatrixXd> es(X.toDense());
         U = es.eigenvectors().real();
         D = es.eigenvalues().real();
         return std::pair<Eigen::MatrixXd, Eigen::VectorXd>(U, D);
@@ -191,11 +196,13 @@ double SketchyCGAL::getCutValue(Eigen::MatrixXd& U){
     int ncols = U.cols();
     double cut_val = 0.0;
     for(int i=0; i<ncols; i++){
-        Eigen::VectorXd sign_evec = (U.col(i).array() > 0.0).select(
-            Eigen::VectorXd::Ones(ncols), -Eigen::VectorXd::Ones(ncols));
-        
-        double rank_val = -( sign_evec.matrix().dot( (*_C) * sign_evec.matrix()  ) );
+        Eigen::VectorXd sign_evec = U.col(i).unaryExpr([](double val) {
+            return (val >= 0.0) ? 1.0 : -1.0;
+        });
+
         // std::cout << "sign_evec dims: " << sign_evec.rows() << " " << sign_evec.cols() << std::endl;
+        double rank_val = -( sign_evec.dot( (*_C) * sign_evec  ) );
+
         // std::cout << "sign_evec norm: " << sign_evec.norm()<< std::endl;
         // std::cout << "rank _val " << rank_val << std::endl;
         cut_val = std::max(cut_val, rank_val);
@@ -209,7 +216,7 @@ Eigen::SparseMatrix<double> SketchyCGAL::getAdjacencyMatrix(){
     return *_A;
 }
 
-Eigen::SparseMatrix<double> SketchyCGAL::getLaplacian(){
+Eigen::SparseMatrix<double, Eigen::RowMajor> SketchyCGAL::getLaplacian(){
     return *_C;
 }
 
@@ -240,13 +247,11 @@ void SketchyCGAL::setup(char* filepath){
 
 void SketchyCGAL::run(){
 
-    Eigen::initParallel();
-
     int n = _C->rows();
     int a = n;
 
-    Eigen::ArrayXd b_orig = Eigen::ArrayXd::Ones(n);
-    Eigen::ArrayXd b = Eigen::ArrayXd::Ones(n);
+    Eigen::VectorXd b_orig = Eigen::VectorXd::Ones(n);
+    Eigen::VectorXd b = Eigen::VectorXd::Ones(n);
 
     // rescale w.r.t A
     b *= _SCALE_A;
@@ -260,20 +265,18 @@ void SketchyCGAL::run(){
     _RESCALE_OBJ /= _SCALE_C;
 
     // initialize dual
-    Eigen::ArrayXd z = Eigen::ArrayXd::Zero(n);
-    Eigen::ArrayXd y0 = Eigen::ArrayXd::Zero(n);
-    Eigen::ArrayXd y = y0;
-    Eigen::ArrayXd vt;
+    Eigen::VectorXd z = Eigen::VectorXd::Zero(n);
+    Eigen::VectorXd y0 = Eigen::VectorXd::Zero(n);
+    Eigen::VectorXd y = y0;
+    Eigen::VectorXd vt;
     double pobj = 0.0;
 
     double TRACE = 0.0;
     double beta, eta, FeasOrg, FeasCond, ObjCond;
 
     bool stop_tolerance = false;
-
-    std::cout << "Starting the SketchyCGAL loop " << std::endl;
-    for (int t = 1; t < _MAX_ITERS + 1; t++){
-        std::cout << " Iter " << t << std::endl;
+    int t;
+    for (t = 1; t < _MAX_ITERS + 1; t++){
 
         beta = _beta0 * sqrt( t + 1);
         eta = 2.0/(t + 1);
@@ -281,32 +284,35 @@ void SketchyCGAL::run(){
         vt = y + beta * (z - b);
 
         int q = ceil( pow(t, 0.25)*log(n) );
-        std::pair<Eigen::ArrayXd, double> ev_info = this->ApproxMinEvecLanczosSE(vt, n, q);
+        std::pair<Eigen::VectorXd, double> ev_info = this->ApproxMinEvecLanczosSE(vt, n, q);
 
-        Eigen::ArrayXd smallest_ev = ev_info.first;
+        Eigen::VectorXd smallest_ev = ev_info.first;
         smallest_ev = sqrt(a)*smallest_ev;
 
         if (!stop_tolerance){
 
-            FeasOrg = ((z - b)*_RESCALE_FEAS).matrix().norm();
-            double clipped_norm = std::max(b_orig.matrix().norm(), 1.0);
+            FeasOrg = ((z - b)*_RESCALE_FEAS).norm();
+            double clipped_norm = std::max(b_orig.norm(), 1.0);
             FeasCond = FeasOrg / clipped_norm;
-            Eigen::ArrayXd Ahk = this->primitive3(smallest_ev);
-            double ObjCond1 = pobj - this->primitive1(smallest_ev).matrix().dot( (smallest_ev).matrix() );
-            double ObjCond2 = y.matrix().dot( (b - Ahk).matrix() ) + beta * ( z - b ).matrix().dot( (z - Ahk).matrix() );
-            double ObjCond3 = -0.5*beta* pow((z-b).matrix().norm(), 2);
-            double ObjCond4 = std::max( double(abs(pobj*_RESCALE_OBJ)), 1.0);
+            Eigen::VectorXd Ahk = this->primitive3(smallest_ev);
+            double ObjCond1 = pobj - this->primitive1(smallest_ev).dot( smallest_ev );
+            double ObjCond2 = y.dot( b - Ahk ) + beta * ( z - b ).dot( z - Ahk );
+            double ObjCond3 = -0.5*beta* pow((z-b).norm(), 2);
+            double ObjCond4 = std::max( double(abs(pobj*_RESCALE_OBJ)) , 1.0);
             ObjCond = (ObjCond1 + ObjCond2 + ObjCond3)*_RESCALE_OBJ / ObjCond4;
-            // std::cout << "FeasOrg = " << FeasOrg << " FeasCond = " << FeasCond << " ObjCond = " << ObjCond << std::endl;
+            // if(t % 100 == 0){
+                // std::cout << " Iter " << t << " FeasOrg = " << FeasOrg << " FeasCond = " << FeasCond << " ObjCond = " << ObjCond << std::endl;
+                // std::cout << " Iter " << t << std::endl;
+            // }
 
             if (FeasCond <= _TOLERANCE && ObjCond <= _TOLERANCE){
                 break;
             }
         }
 
-        Eigen::ArrayXd zEvec = this->primitive3(smallest_ev);
+        Eigen::VectorXd zEvec = this->primitive3(smallest_ev);
         // std::cout << "norm of zEvec: " << zEvec.matrix().norm() << std::endl;
-        Eigen::ArrayXd z_new = (1-eta)*z + eta*zEvec;
+        Eigen::VectorXd z_new = (1-eta)*z + eta*zEvec;
         // std::cout << "norm of z_new: " << z_new.matrix().norm() << std::endl;
         // std::cout << "norm of z_new-z: " << (z_new-z).matrix().norm() << std::endl;
         z = z_new;
@@ -316,18 +322,20 @@ void SketchyCGAL::run(){
         _nysketch->update(/*v=*/smallest_ev, /*eta=*/eta);
 
         double beta_p = _beta0 * sqrt(t+2);
-        Eigen::ArrayXd dual_update = z - b;
+        Eigen::VectorXd dual_update = z - b;
 
         double NORM_A = 1;
         double sigma = std::min(_beta0, 4 * beta_p * eta*eta * a*a * NORM_A*NORM_A / pow(dual_update.matrix().norm(),2) );
 
         // update dual
-        Eigen::ArrayXd yt1 = y + sigma * dual_update;
+        Eigen::VectorXd yt1 = y + sigma * dual_update;
         if ( (yt1 - y0).matrix().norm() <= _K ){
             y = yt1;
         }
 
     }
+
+    std::cout << " Iter " << t << " FeasOrg = " << FeasOrg << " FeasCond = " << FeasCond << " ObjCond = " << ObjCond << std::endl;
 
     std::pair<Eigen::MatrixXd, Eigen::MatrixXd> sketch_res = _nysketch->reconstruct();
     Eigen::MatrixXd U = sketch_res.first;
@@ -336,7 +344,7 @@ void SketchyCGAL::run(){
     // std::cout << "Dimensions of U : " << U.rows() << " " << U.cols() << std::endl;
     // std::cout << "Dimensions of Delt : " << Delt.rows() << " " << Delt.cols() << std::endl;
     // std::cout << "Trace value is " << TRACE << std::endl;
-    Delt = Delt + (( TRACE - Delt.trace() )/_R)*Eigen::MatrixXd::Identity(Delt.rows(), Delt.cols());
+    Delt.noalias() += (( TRACE - Delt.trace() )/_R)*Eigen::MatrixXd::Identity(Delt.rows(), Delt.cols());
     U = U*Delt.array().sqrt().matrix();
     U = (U.array()/sqrt(_SCALE_X)).matrix();
 

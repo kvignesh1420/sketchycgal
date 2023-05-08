@@ -24,21 +24,21 @@ NystromSketch::NystromSketch(int n, int R){
   }
   std::default_random_engine generator;
   std::normal_distribution<double> distribution(0.0, 1.0);
-  std::cout << "Filling the Omega the matrix with random normal values" << std::endl;
+  std::cout << "Filling the Omega matrix with random normal values" << std::endl;
   _Omega = new Eigen::MatrixXd(n, R);
-  _Omega->setRandom();
-  // for (int i = 0; i < n; ++i) {
-  //     for (int j = 0; j < R; ++j) {
-  //         (*_Omega)(i, j) = distribution(generator);
-  //     }
-  // }
+  // _Omega->setRandom();
+  for (int i = 0; i < n; ++i) {
+      for (int j = 0; j < R; ++j) {
+          (*_Omega)(i, j) = distribution(generator);
+      }
+  }
   std::cout << "Filling the S matrix with zero values" << std::endl;
   _S = new Eigen::MatrixXd(n ,R);
   _S->setZero();
 }
 
-void NystromSketch::update( Eigen::ArrayXd& v, double eta){
-  Eigen::MatrixXd new_S = (1-eta)*(*_S) + eta*( v.matrix() * ( v.matrix().transpose() * (*_Omega) ) );
+void NystromSketch::update( Eigen::VectorXd& v, double eta){
+  Eigen::MatrixXd new_S = (1-eta)*(*_S) + eta*( v * ( v.transpose() * (*_Omega) ) );
   // std::cout << "norm of new_S - S = " << (new_S - (*_S)).norm() << std::endl;
   (*_S) = new_S;
 }
@@ -47,7 +47,7 @@ std::pair<Eigen::MatrixXd, Eigen::MatrixXd > NystromSketch::reconstruct(){
   Eigen::VectorXd col_norms = _S->colwise().norm();
   double sigma = sqrt(_n) * EPS * col_norms.maxCoeff();
   // std::cout << "sigma val " << sigma << std::endl;
-  (*_S) = (*_S) + sigma * (*_Omega);
+  (*_S).noalias() +=  sigma * (*_Omega);
   Eigen::MatrixXd B = (*_Omega).transpose() * (*_S);
   B = 0.5*( B.array() + B.array().transpose() );
   // skip zero norm check

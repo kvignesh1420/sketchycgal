@@ -26,17 +26,17 @@ class SketchyCGAL{
     void run();
 
     Eigen::SparseMatrix<double> getAdjacencyMatrix();
-    Eigen::SparseMatrix<double> getLaplacian();
+    Eigen::SparseMatrix<double, Eigen::RowMajor> getLaplacian();
   private:
-    Eigen::SparseMatrix<double>* computeLaplacian(Eigen::SparseMatrix<double>* A);
+    Eigen::SparseMatrix<double, Eigen::RowMajor>* computeLaplacian(Eigen::SparseMatrix<double>* A);
 
     /* primitives for matrix - vector manipulations */
-    Eigen::ArrayXd primitive1(Eigen::ArrayXd& x);
-    Eigen::ArrayXd primitive2(Eigen::ArrayXd& y, Eigen::ArrayXd& x);
-    Eigen::ArrayXd primitive3(Eigen::ArrayXd& x);
+    Eigen::VectorXd primitive1(const Eigen::VectorXd& x);
+    Eigen::VectorXd primitive2(const Eigen::VectorXd& y, const Eigen::VectorXd& x);
+    Eigen::VectorXd primitive3(const Eigen::VectorXd& x);
 
     /* Lanczos approximation of eigenvector*/
-    std::pair<Eigen::ArrayXd, double> ApproxMinEvecLanczosSE(Eigen::ArrayXd& vt, int n, int q);
+    std::pair<Eigen::VectorXd, double> ApproxMinEvecLanczosSE(Eigen::VectorXd& vt, int n, int q);
     std::pair<Eigen::MatrixXd, Eigen::VectorXd> cgal_eig(const Eigen::SparseMatrix<double>& X);
 
     /* Get the value of max-cut */
@@ -45,7 +45,7 @@ class SketchyCGAL{
     /* private variables */
     Eigen::SparseMatrix<double>* _A = nullptr;
     // using _C to represent the laplacian for notational consistency
-    Eigen::SparseMatrix<double>* _C = nullptr;
+    Eigen::SparseMatrix<double, Eigen::RowMajor>* _C = nullptr;
     // scaling factors;
     double _SCALE_A = 1.0;
     double _SCALE_X = 1.0;
@@ -53,7 +53,7 @@ class SketchyCGAL{
     double _RESCALE_OBJ = 1.0;
     double _RESCALE_FEAS = 1.0;
     // runner config
-    int _MAX_ITERS = 300;
+    int _MAX_ITERS = 1000;
     int _R = 10;
     double _beta0 = 1.0;
     double _K = INFINITY;

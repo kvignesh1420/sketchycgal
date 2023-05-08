@@ -5,13 +5,22 @@
 #include "sketchycgal/cc/reader.h"
 #include "sketchycgal/cc/cgal.h"
 
+#if defined(_OPENMP)
+#include <omp.h>
+#define EIGEN_DONT_PARALLELIZE
+#endif
 
 int main(int argc, char *argv[]){
 
     char* filepath = argv[1];
-
+    #ifdef EIGEN_DONT_PARALLELIZE
+    std::cout << "Default Eigen parallelization disabled, OpenMP available " << std::endl;
+    #else
+    std::cout << "Default Eigen parallelization enabled, OpenMP unavailable " << std::endl;
+    #endif
     SketchyCGAL Runner = SketchyCGAL();
     Runner.setup(filepath);
+    std::cout << "Starting the SketchyCGAL loop " << std::endl;
     auto start_time = std::chrono::high_resolution_clock::now();
     Runner.run();
     auto end_time = std::chrono::high_resolution_clock::now();

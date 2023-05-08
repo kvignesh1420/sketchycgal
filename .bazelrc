@@ -2,7 +2,6 @@
 # Default build options. These are applied first and unconditionally.
 
 build --spawn_strategy=standalone
-build -c opt
 
 # Make Bazel print out all options from rc files.
 build --announce_rc
@@ -15,6 +14,7 @@ build --copt="-D_GLIBCXX_USE_CXX11_ABI=0"
 build --copt="-DEIGEN_MAX_ALIGN_BYTES=64"
 build --cxxopt="-std=c++14"
 build --cxxopt="-O3"
+build --cxxopt="-march=native"
 build --cxxopt="-DEIGEN_MPL2_ONLY"
 build --enable_platform_specific_config
 build --noshow_progress

@@ -33,10 +33,18 @@ cc_library(
     name = "eigen3",
     hdrs = EIGEN3_THIRD_PARTY_HEADERS,
     visibility = ["//visibility:public"],
-    linkopts = ["-fopenmp"],
+    linkopts = select({
+        ":optimization_build": ["-fopenmp"],
+        "//conditions:default": [],
+    }),
     deps = [
         "@eigen_archive//:eigen3",
     ],
+)
+
+config_setting(
+    name = "optimization_build",
+    values = {"compilation_mode": "opt"},
 )
 
 filegroup(
