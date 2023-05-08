@@ -1,0 +1,3 @@
+from sketchycgal.python.load_so import _pywrap_libsketchycgal
+
+SketchyCGAL = _pywrap_libsketchycgal.SketchyCGAL

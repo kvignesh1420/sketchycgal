@@ -24,7 +24,7 @@ NystromSketch::NystromSketch(int n, int R){
   }
   std::default_random_engine generator;
   std::normal_distribution<double> distribution(0.0, 1.0);
-  std::cout << "Filling the Omega matrix with random normal values" << std::endl;
+  // std::cout << "Filling the Omega matrix with random normal values" << std::endl;
   _Omega = new Eigen::MatrixXd(n, R);
   // _Omega->setRandom();
   for (int i = 0; i < n; ++i) {
@@ -32,7 +32,7 @@ NystromSketch::NystromSketch(int n, int R){
           (*_Omega)(i, j) = distribution(generator);
       }
   }
-  std::cout << "Filling the S matrix with zero values" << std::endl;
+  // std::cout << "Filling the S matrix with zero values" << std::endl;
   _S = new Eigen::MatrixXd(n ,R);
   _S->setZero();
 }

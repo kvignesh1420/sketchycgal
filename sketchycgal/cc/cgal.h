@@ -18,9 +18,8 @@ class SketchyCGAL{
       delete _A;
       delete _C;
     };
-    /* Allow the user to pass a N x 3 matrix of (row, col, wt) entries of the
-     adjacency matrix and configure the state on demand via the `setup` method. */
-    void setup(char* filepath);
+    // user passed values from cc or py code
+    void setup(char* filepath, int max_iters, int sketch_rank, double tolerance);
 
     // run the sketchyCGAL iterations
     void run();
@@ -52,12 +51,12 @@ class SketchyCGAL{
     double _SCALE_C = 1.0;
     double _RESCALE_OBJ = 1.0;
     double _RESCALE_FEAS = 1.0;
-    // runner config
-    int _MAX_ITERS = 1000;
-    int _R = 10;
     double _beta0 = 1.0;
     double _K = INFINITY;
-    double _TOLERANCE = 0.1;
+    // runner config
+    int _MAX_ITERS;
+    int _R;
+    double _TOLERANCE;
     // nystrom sketch object;
     NystromSketch* _nysketch = nullptr;
 };

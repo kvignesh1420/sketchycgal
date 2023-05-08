@@ -50,3 +50,7 @@ bazel-*
 .clwb/
 .idea/
 plots/
+
+# python files
+*.pyc
+.venv/

@@ -221,7 +221,11 @@ Eigen::SparseMatrix<double, Eigen::RowMajor> SketchyCGAL::getLaplacian(){
 }
 
 // setup method to prepare the necessary matrices
-void SketchyCGAL::setup(char* filepath){
+void SketchyCGAL::setup(char* filepath, int max_iters, int sketch_rank, double tolerance){
+
+    _MAX_ITERS = max_iters;
+    _R = sketch_rank;
+    _TOLERANCE = tolerance;
 
     // Create Reader object and prepare the adjacency matrix
     Reader* r = new MMReader(filepath);
@@ -335,8 +339,6 @@ void SketchyCGAL::run(){
 
     }
 
-    std::cout << " Iter " << t << " FeasOrg = " << FeasOrg << " FeasCond = " << FeasCond << " ObjCond = " << ObjCond << std::endl;
-
     std::pair<Eigen::MatrixXd, Eigen::MatrixXd> sketch_res = _nysketch->reconstruct();
     Eigen::MatrixXd U = sketch_res.first;
     Eigen::MatrixXd Delt = sketch_res.second;
@@ -348,10 +350,9 @@ void SketchyCGAL::run(){
     U = U*Delt.array().sqrt().matrix();
     U = (U.array()/sqrt(_SCALE_X)).matrix();
 
-    std::cout << "Dimensions of U : " << U.rows() << " " << U.cols() << std::endl;
-    std::cout << "Dimensions of Delt : " << Delt.rows() << " " << Delt.cols() << std::endl;
+    // std::cout << "Dimensions of U : " << U.rows() << " " << U.cols() << std::endl;
+    // std::cout << "Dimensions of Delt : " << Delt.rows() << " " << Delt.cols() << std::endl;
     double max_cut = this->getCutValue(U);
-    std::cout << "max-cut value : " << max_cut << std::endl;
-
+    std::cout << "Max-cut=" << max_cut << " Iter=" << t << " FeasOrg=" << FeasOrg << " FeasCond=" << FeasCond << " ObjCond=" << ObjCond << std::endl;
 
 }

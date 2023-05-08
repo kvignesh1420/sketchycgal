@@ -39,7 +39,7 @@ Eigen::SparseMatrix<double>* MMReader::Read(){
     // std::string objectClass, matrixType, storageScheme;
     iss >> _nrows >> _ncols >> _nnz;
 
-    std::cout << "rows " << _nrows << " cols " << _ncols << " nnz " << _nnz << std::endl;
+    // std::cout << "rows " << _nrows << " cols " << _ncols << " nnz " << _nnz << std::endl;
  
     // Read the matrix entries
     std::vector<Eigen::Triplet<double> > triplets;
