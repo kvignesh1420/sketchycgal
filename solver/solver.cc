@@ -19,7 +19,7 @@ int main(int argc, char *argv[]){
     std::cout << "Default Eigen parallelization enabled, OpenMP unavailable " << std::endl;
     #endif
     SketchyCGAL Runner = SketchyCGAL();
-    Runner.setup(filepath);
+    Runner.setup(filepath, 10, 10, 0.1);
     std::cout << "Starting the SketchyCGAL loop " << std::endl;
     auto start_time = std::chrono::high_resolution_clock::now();
     Runner.run();
