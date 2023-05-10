@@ -23,3 +23,6 @@ done
 
 url=https://suitesparse-collection-website.herokuapp.com/MM/DIMACS10/delaunay_n20.tar.gz
 download_extract "$url" "data/DIMACS10"
+
+url=https://suitesparse-collection-website.herokuapp.com/MM/DIMACS10/road_central.tar.gz
+download_extract "$url" "data/DIMACS10"
