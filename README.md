@@ -13,12 +13,19 @@ $ bash build.sh
 # C++ runs
 $ bazel-bin/solver/solver <path to graph .mtx file>
 
-# python runs (by default run on G67 graphs.)
-# Change the path in code for other larger graphs.
-$ python experiments.py
-
 # clean bazel cache
 $ bazel clean --expunge
+```
+
+For python based experiments, please create a virtual environment
+
+```bash
+$ python3.9 -m virtualenv .venv
+$ source .venv/bin/activate
+$ pip install -r requirements.txt
+# python runs (by default run on G67 graphs.)
+# Change the path in code for other larger graphs.
+(.venv) $ python experiments.py
 ```
 
 ### Profiling
