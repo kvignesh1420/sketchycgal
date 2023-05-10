@@ -15,10 +15,10 @@ int main(int argc, char *argv[]){
     char* filepath = argv[1];
     #ifdef EIGEN_DONT_PARALLELIZE
     std::cout << "Default Eigen parallelization disabled, OpenMP available " << std::endl;
+    std::cout << "Eigen using " << Eigen::nbThreads( ) << " threads" << std::endl;
     #else
     std::cout << "Default Eigen parallelization enabled, OpenMP unavailable " << std::endl;
     #endif
-    std::cout << "Eigen using " << Eigen::nbThreads( ) << " threads" << std::endl;
     SketchyCGAL Runner = SketchyCGAL();
     Runner.setup(filepath, 10, 10, 0.1);
     std::cout << "Starting the SketchyCGAL loop " << std::endl;
